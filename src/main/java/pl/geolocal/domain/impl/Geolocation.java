@@ -2,14 +2,13 @@ package pl.geolocal.domain.impl;
 
 import lombok.Getter;
 import lombok.Setter;
-import pl.geolocal.domain.Geolocation;
 
 /**
  * Created by Piotr on 2016-12-18.
  */
 @Getter
 @Setter
-public class GeolocationImpl implements Geolocation{
+public class Geolocation {
     private String region;
 
     private String zip;
@@ -41,6 +40,6 @@ public class GeolocationImpl implements Geolocation{
     @Override
     public String toString()
     {
-        return "GeolocationImpl [region = "+region+", zip = "+zip+", lon = "+lon+", status = "+status+", query = "+query+", isp = "+isp+", countryCode = "+countryCode+", regionName = "+regionName+", as = "+as+", org = "+org+", city = "+city+", country = "+country+", timezone = "+timezone+", lat = "+lat+"]";
+        return "Geolocation [region = "+region+", zip = "+zip+", lon = "+lon+", status = "+status+", query = "+query+", isp = "+isp+", countryCode = "+countryCode+", regionName = "+regionName+", as = "+as+", org = "+org+", city = "+city+", country = "+country+", timezone = "+timezone+", lat = "+lat+"]";
     }
 }

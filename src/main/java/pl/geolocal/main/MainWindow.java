@@ -4,12 +4,13 @@ import com.jgoodies.forms.factories.CC;
 import com.jgoodies.forms.layout.FormLayout;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import pl.geolocal.domain.impl.GeolocationImpl;
+import pl.geolocal.domain.impl.Geolocation;
 import pl.geolocal.service.GeolocationService;
-import pl.geolocal.service.impl.GeolocationServiceImpl;
 import pl.geolocal.util.GeolocationOperations;
 
+import javax.annotation.PostConstruct;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,15 +26,18 @@ import java.io.IOException;
  */
 @Getter
 @Setter
-@Component("mainWindow")
+@Component
 public class MainWindow extends JFrame {
 
-    //    @Resource(name="geolocationService")
-//    GeolocationServiceImpl geolocationService;
+    private final GeolocationService geolocationService;
 
-    GeolocationService geolocationService = new GeolocationServiceImpl();
+    @Autowired
+    public MainWindow(GeolocationService geolocationService) {
+        this.geolocationService = geolocationService;
+    }
 
-    public MainWindow() {
+    @PostConstruct
+    public void init() {
         initComponents();
     }
 
@@ -125,8 +129,8 @@ public class MainWindow extends JFrame {
                 try {
                     String remoteIpAddress = ipAddressInput1_pan1.getText();
                     String localIpAddress = GeolocationOperations.getPcIpAddress();
-                    GeolocationImpl geolocationLocal = geolocationService.getJsonObject(localIpAddress);
-                    GeolocationImpl geolocationRemote = geolocationService.getJsonObject(remoteIpAddress);
+                    Geolocation geolocationLocal = geolocationService.getJsonObject(localIpAddress);
+                    Geolocation geolocationRemote = geolocationService.getJsonObject(remoteIpAddress);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 } catch (Exception e1) {
@@ -140,8 +144,8 @@ public class MainWindow extends JFrame {
                 String remoteIpAddres1 = ipAddressInput1_pan2.getText();
                 String remoteIpAddres2 = ipAddressInput2_pan2.getText();
                 try {
-                    GeolocationImpl geolocationRemote1 = geolocationService.getJsonObject(remoteIpAddres1);
-                    GeolocationImpl geolocationRemote2 = geolocationService.getJsonObject(remoteIpAddres2);
+                    Geolocation geolocationRemote1 = geolocationService.getJsonObject(remoteIpAddres1);
+                    Geolocation geolocationRemote2 = geolocationService.getJsonObject(remoteIpAddres2);
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
