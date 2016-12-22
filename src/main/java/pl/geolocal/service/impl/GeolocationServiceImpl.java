@@ -1,22 +1,26 @@
 package pl.geolocal.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pl.geolocal.dao.GeolocationDao;
-import pl.geolocal.dao.impl.GeolocationDaoImpl;
-import pl.geolocal.domain.impl.GeolocationImpl;
+import pl.geolocal.domain.impl.Geolocation;
 import pl.geolocal.service.GeolocationService;
 
 /**
  * Created by Piotr on 2016-12-18.
  */
-@Service("geolocationService")
+@Service
 public class GeolocationServiceImpl implements GeolocationService {
 
-//    @Resource(name = "geolocationDao")
-//    GeolocationDao geolocationDao;
+    private final GeolocationDao geolocationDao;
 
-    public GeolocationImpl getJsonObject(String ipAddress) throws Exception {
-        GeolocationDao geolocationDao = new GeolocationDaoImpl();
+    @Autowired
+    public GeolocationServiceImpl(GeolocationDao geolocationDao) {
+        this.geolocationDao = geolocationDao;
+    }
+
+    @Override
+    public Geolocation getJsonObject(String ipAddress) throws Exception {
         return geolocationDao.getJsonObject(ipAddress);
     }
 }

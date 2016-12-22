@@ -1,10 +1,10 @@
 package pl.geolocal.dao;
 
-import pl.geolocal.domain.impl.GeolocationImpl;
+import pl.geolocal.domain.impl.Geolocation;
 
 /**
  * Created by Piotr on 2016-12-18.
  */
 public interface GeolocationDao {
-    GeolocationImpl getJsonObject(String ipAddres);
+    Geolocation getJsonObject(String ipAddress);
 }
