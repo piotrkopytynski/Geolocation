@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pl.geolocal.domain.impl.Geolocation;
+import pl.geolocal.service.DistanceService;
 import pl.geolocal.service.GeolocationService;
 import pl.geolocal.util.GeolocationOperations;
 
@@ -30,10 +31,12 @@ import java.io.IOException;
 public class MainWindow extends JFrame {
 
     private final GeolocationService geolocationService;
+    private final DistanceService distanceService;
 
     @Autowired
-    public MainWindow(GeolocationService geolocationService) {
+    public MainWindow(GeolocationService geolocationService, DistanceService distanceService) {
         this.geolocationService = geolocationService;
+        this.distanceService = distanceService;
     }
 
     @PostConstruct
@@ -43,7 +46,7 @@ public class MainWindow extends JFrame {
 
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
-        // Generated using JFormDesigner Evaluation license - Piotr Kopytynski
+        // Generated using JFormDesigner Evaluation license - Piotr B
         tabbedPane1 = new JTabbedPane();
         panel1 = new JPanel();
         label1_pan1 = new JLabel();
@@ -59,8 +62,8 @@ public class MainWindow extends JFrame {
         //======== this ========
         Container contentPane = getContentPane();
         contentPane.setLayout(new FormLayout(
-                "2*(default, $lcgap), 16dlu, $lcgap, 70dlu, $lcgap, 115dlu, $lcgap, 42dlu, 2*($lcgap, default)",
-                "5*(default, $lgap), 73dlu, 2*($lgap, default)"));
+            "2*(default, $lcgap), 16dlu, $lcgap, 70dlu, $lcgap, 115dlu, $lcgap, 42dlu, 2*($lcgap, default)",
+            "5*(default, $lgap), 73dlu, 2*($lgap, default)"));
 
         //======== tabbedPane1 ========
         {
@@ -70,19 +73,14 @@ public class MainWindow extends JFrame {
 
                 // JFormDesigner evaluation mark
                 panel1.setBorder(new javax.swing.border.CompoundBorder(
-                        new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
-                                "", javax.swing.border.TitledBorder.CENTER,
-                                javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
-                                java.awt.Color.red), panel1.getBorder()));
-                panel1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-                    public void propertyChange(java.beans.PropertyChangeEvent e) {
-                        if ("border".equals(e.getPropertyName())) throw new RuntimeException();
-                    }
-                });
+                    new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0),
+                        "JFormDesigner Evaluation", javax.swing.border.TitledBorder.CENTER,
+                        javax.swing.border.TitledBorder.BOTTOM, new java.awt.Font("Dialog", java.awt.Font.BOLD, 12),
+                        java.awt.Color.red), panel1.getBorder())); panel1.addPropertyChangeListener(new java.beans.PropertyChangeListener(){public void propertyChange(java.beans.PropertyChangeEvent e){if("border".equals(e.getPropertyName()))throw new RuntimeException();}});
 
                 panel1.setLayout(new FormLayout(
-                        "26dlu, $lcgap, 56dlu, $lcgap, 127dlu, $lcgap, 44dlu, $lcgap, 62dlu",
-                        "4*(default, $lgap), default"));
+                    "26dlu, $lcgap, 56dlu, $lcgap, 127dlu, $lcgap, 44dlu, $lcgap, 62dlu",
+                    "4*(default, $lgap), default"));
 
                 //---- label1_pan1 ----
                 label1_pan1.setText("Remote PC IP:");
@@ -98,8 +96,8 @@ public class MainWindow extends JFrame {
             //======== panel2 ========
             {
                 panel2.setLayout(new FormLayout(
-                        "26dlu, $lcgap, 58dlu, $lcgap, 129dlu, $lcgap, default",
-                        "4*(default, $lgap), default"));
+                    "26dlu, $lcgap, 58dlu, $lcgap, 129dlu, $lcgap, default",
+                    "4*(default, $lgap), 36dlu, $lgap, default"));
 
                 //---- label1_pan2 ----
                 label1_pan2.setText("IP address 1:");
@@ -131,6 +129,7 @@ public class MainWindow extends JFrame {
                     String localIpAddress = GeolocationOperations.getPcIpAddress();
                     Geolocation geolocationLocal = geolocationService.getJsonObject(localIpAddress);
                     Geolocation geolocationRemote = geolocationService.getJsonObject(remoteIpAddress);
+                    distanceService.calculate(geolocationLocal, geolocationRemote);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 } catch (Exception e1) {
@@ -146,6 +145,7 @@ public class MainWindow extends JFrame {
                 try {
                     Geolocation geolocationRemote1 = geolocationService.getJsonObject(remoteIpAddres1);
                     Geolocation geolocationRemote2 = geolocationService.getJsonObject(remoteIpAddres2);
+                    distanceService.calculate(geolocationRemote1, geolocationRemote2);
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -155,7 +155,7 @@ public class MainWindow extends JFrame {
     }
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
-    // Generated using JFormDesigner Evaluation license - Piotr Kopytynski
+    // Generated using JFormDesigner Evaluation license - Piotr B
     private JTabbedPane tabbedPane1;
     private JPanel panel1;
     private JLabel label1_pan1;
