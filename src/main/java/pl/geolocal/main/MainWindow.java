@@ -10,6 +10,7 @@ import pl.geolocal.domain.impl.Geolocation;
 import pl.geolocal.service.DistanceService;
 import pl.geolocal.service.GeolocationService;
 import pl.geolocal.util.GeolocationOperations;
+import pl.geolocal.util.IpValidator;
 
 import javax.annotation.PostConstruct;
 import javax.swing.*;
@@ -32,11 +33,13 @@ public class MainWindow extends JFrame {
 
     private final GeolocationService geolocationService;
     private final DistanceService distanceService;
+    private final IpValidator ipValidator;
 
     @Autowired
-    public MainWindow(GeolocationService geolocationService, DistanceService distanceService) {
+    public MainWindow(GeolocationService geolocationService, DistanceService distanceService, IpValidator ipValidator) {
         this.geolocationService = geolocationService;
         this.distanceService = distanceService;
+        this.ipValidator = ipValidator;
     }
 
     @PostConstruct
@@ -127,14 +130,17 @@ public class MainWindow extends JFrame {
                 try {
                     String remoteIpAddress = ipAddressInput1_pan1.getText();
                     String localIpAddress = GeolocationOperations.getPcIpAddress();
-                    Geolocation geolocationLocal = geolocationService.getJsonObject(localIpAddress);
-                    Geolocation geolocationRemote = geolocationService.getJsonObject(remoteIpAddress);
-                    distanceService.calculate(geolocationLocal, geolocationRemote);
+                    if (!ipValidator.validate(panel1, remoteIpAddress)) {
+                        Geolocation geolocationLocal = geolocationService.getJsonObject(localIpAddress);
+                        Geolocation geolocationRemote = geolocationService.getJsonObject(remoteIpAddress);
+                        distanceService.calculate(geolocationLocal, geolocationRemote);
+                    }
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
+
             }
         });
 
@@ -143,9 +149,11 @@ public class MainWindow extends JFrame {
                 String remoteIpAddres1 = ipAddressInput1_pan2.getText();
                 String remoteIpAddres2 = ipAddressInput2_pan2.getText();
                 try {
-                    Geolocation geolocationRemote1 = geolocationService.getJsonObject(remoteIpAddres1);
-                    Geolocation geolocationRemote2 = geolocationService.getJsonObject(remoteIpAddres2);
-                    distanceService.calculate(geolocationRemote1, geolocationRemote2);
+                    if (!(ipValidator.validate(panel1, remoteIpAddres1) || ipValidator.validate(panel1, remoteIpAddres2)) ) {
+                        Geolocation geolocationRemote1 = geolocationService.getJsonObject(remoteIpAddres1);
+                        Geolocation geolocationRemote2 = geolocationService.getJsonObject(remoteIpAddres2);
+                        distanceService.calculate(geolocationRemote1, geolocationRemote2);
+                    }
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
