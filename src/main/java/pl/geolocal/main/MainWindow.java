@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import pl.geolocal.domain.impl.Geolocation;
 import pl.geolocal.service.DistanceService;
 import pl.geolocal.service.GeolocationService;
+import pl.geolocal.service.PingService;
 import pl.geolocal.util.GeolocationOperations;
 import pl.geolocal.util.IpValidator;
 import pl.geolocal.util.MapGenerator;
@@ -26,6 +27,7 @@ public class MainWindow extends JFrame {
     private final DistanceService distanceService;
     private final IpValidator ipValidator;
     private final MapGenerator mapGenerator;
+    private final PingService pingService;
 
     private String localIpAddress;
     private Geolocation geolocationLocal;
@@ -64,16 +66,19 @@ public class MainWindow extends JFrame {
     private JPanel localPanel;
     private JPanel remotePanel;
     private JPanel remoteMapPanel;
+    private JButton pingButton_panel1;
+    private JLabel rttValueLabel;
     private JLabel mapLabel;
 
 
     @Autowired
     public MainWindow(GeolocationService geolocationService, DistanceService distanceService, IpValidator ipValidator,
-                      MapGenerator mapGenerator) {
+                      MapGenerator mapGenerator, PingService pingService) {
         this.geolocationService = geolocationService;
         this.distanceService = distanceService;
         this.ipValidator = ipValidator;
         this.mapGenerator = mapGenerator;
+        this.pingService = pingService;
     }
 
     @PostConstruct
@@ -95,6 +100,10 @@ public class MainWindow extends JFrame {
 
         calculateButton_panel2.addActionListener(e ->
                 calculateRemoteAction()
+        );
+
+        pingButton_panel1.addActionListener(e ->
+                pingRemoteAction()
         );
     }
 
@@ -134,6 +143,26 @@ public class MainWindow extends JFrame {
         asDestinationLabel.setText(geolocationRemote2.getAs());
 
         mapLabel_panel2.setIcon(mapGenerator.createPathMap(geolocationRemote1, geolocationRemote2));
+    }
+
+    private void pingRemoteAction() {
+        String remoteIpAddress = remoteIpAddressTextField.getText();
+        Geolocation geolocationRemote = null;
+        if (!ipValidator.validate(rootPanel, remoteIpAddress)) {
+            try {
+                geolocationRemote = geolocationService.getJsonObject(remoteIpAddress);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (ipValidator.validateExistence(rootPanel, geolocationRemote, remoteIpAddress)) {
+                Double rttValue;
+                if ((rttValue = pingService.calculateRttValue(remoteIpAddress)) != null) {
+                    rttValueLabel.setText(String.valueOf(rttValue) + " ms");
+                } else {
+                    rttValueLabel.setText("Request timed out");
+                }
+            }
+        }
     }
 
     private void calculateLocalAction() {
