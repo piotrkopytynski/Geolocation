@@ -6,7 +6,7 @@ public class Run {
 
     public static void main(String[] args) {
 
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("spring-config.xml");
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("spring_config.xml");
         applicationContext.getBean(MainClass.class);
 
     }

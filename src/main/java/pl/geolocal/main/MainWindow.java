@@ -84,6 +84,8 @@ public class MainWindow extends JFrame {
 
     private void initComponents() {
 
+        setResizable(false);
+
         initLocalInformation();
 
         initDefaultMaps();
