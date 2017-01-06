@@ -13,7 +13,6 @@ import pl.geolocal.util.MapGenerator;
 
 import javax.annotation.PostConstruct;
 import javax.swing.*;
-import java.io.IOException;
 
 /**
  * Created by piotr on 06.01.2017.
@@ -91,11 +90,11 @@ public class MainWindow extends JFrame {
         initDefaultMaps();
 
         calculateButton_panel1.addActionListener(e ->
-            calculateLocalAction()
+                calculateLocalAction()
         );
 
         calculateButton_panel2.addActionListener(e ->
-            calculateRemoteAction()
+                calculateRemoteAction()
         );
     }
 
@@ -111,7 +110,10 @@ public class MainWindow extends JFrame {
                     ipValidator.validate(rootPanel, remoteIpAddress2))) {
                 Geolocation geolocationRemote1 = geolocationService.getJsonObject(remoteIpAddress1);
                 Geolocation geolocationRemote2 = geolocationService.getJsonObject(remoteIpAddress2);
-                setRemoteInformation(geolocationRemote1, geolocationRemote2);
+                if ((ipValidator.validateExistence(rootPanel, geolocationRemote1, remoteIpAddress1) ||
+                        ipValidator.validateExistence(rootPanel, geolocationRemote2, remoteIpAddress2))) {
+                    setRemoteInformation(geolocationRemote1, geolocationRemote2);
+                }
             }
         } catch (Exception e1) {
             e1.printStackTrace();
@@ -147,8 +149,9 @@ public class MainWindow extends JFrame {
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
-
-            setLocalInformation(geolocationRemote);
+            if (ipValidator.validateExistence(rootPanel, geolocationRemote, remoteIpAddress)) {
+                setLocalInformation(geolocationRemote);
+            }
         }
     }
 
@@ -171,8 +174,6 @@ public class MainWindow extends JFrame {
         try {
             localIpAddress = GeolocationOperations.getPcIpAddress();
             geolocationLocal = geolocationService.getJsonObject(localIpAddress);
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
