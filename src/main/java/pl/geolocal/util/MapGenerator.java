@@ -1,10 +1,8 @@
 package pl.geolocal.util;
 
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import pl.geolocal.domain.impl.Geolocation;
 
-import javax.annotation.PostConstruct;
 import javax.swing.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,7 +20,7 @@ public class MapGenerator {
 
     private static final String URL = "http://maps.googleapis.com/maps/api/staticmap?";
 
-    private static final String IMAGE = "C:\\Users\\piotr\\Desktop\\Geolocation_builder\\image.jpg";
+    private static final String IMAGE = "image.jpg";
 
     private static final String CENTER = "center";
     private static final String ZOOM = "zoom";
