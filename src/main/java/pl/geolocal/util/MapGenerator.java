@@ -110,6 +110,6 @@ public class MapGenerator {
         }
 
         return new ImageIcon((new ImageIcon(IMAGE)).getImage()
-                .getScaledInstance(630, 600, java.awt.Image.SCALE_SMOOTH));
+                .getScaledInstance(640, 640, java.awt.Image.SCALE_SMOOTH));
     }
 }
