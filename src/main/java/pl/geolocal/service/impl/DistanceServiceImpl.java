@@ -24,6 +24,6 @@ public class DistanceServiceImpl implements DistanceService {
 
         distance = Math.pow(distance, 2);
 
-        return String.valueOf(Math.sqrt(distance));
+        return String.valueOf(Math.round(Math.sqrt(distance))) + " km";
     }
 }

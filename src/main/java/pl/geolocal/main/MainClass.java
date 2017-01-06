@@ -1,5 +1,6 @@
 package pl.geolocal.main;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class MainClass {
     void init(){
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+                mainWindow.setContentPane(mainWindow.getRootPanel());
                 mainWindow.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 mainWindow.pack();
                 mainWindow.setVisible(true);
