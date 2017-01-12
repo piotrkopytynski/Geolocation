@@ -2,9 +2,11 @@ package pl.geolocal.main;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pl.geolocal.domain.impl.Geolocation;
+import pl.geolocal.domain.impl.TableRow;
 import pl.geolocal.service.DistanceService;
 import pl.geolocal.service.GeolocationService;
 import pl.geolocal.service.PingService;
@@ -14,6 +16,16 @@ import pl.geolocal.util.MapGenerator;
 
 import javax.annotation.PostConstruct;
 import javax.swing.*;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * Created by piotr on 06.01.2017.
@@ -29,8 +41,12 @@ public class MainWindow extends JFrame {
     private final MapGenerator mapGenerator;
     private final PingService pingService;
 
+    List<TableRow> tableRows = new ArrayList<>();
+
     private String localIpAddress;
     private Geolocation geolocationLocal;
+
+
 
     private JPanel rootPanel;
     private JTabbedPane tabbedPanel;
@@ -66,8 +82,11 @@ public class MainWindow extends JFrame {
     private JPanel localPanel;
     private JPanel remotePanel;
     private JPanel remoteMapPanel;
-    private JButton pingButton_panel1;
     private JLabel rttValueLabel;
+    private JButton uploadFileButton;
+    private JTable table1;
+    private JProgressBar progressBar1;
+    private JButton startButton;
     private JLabel mapLabel;
 
 
@@ -94,17 +113,77 @@ public class MainWindow extends JFrame {
 
         initDefaultMaps();
 
-        calculateButton_panel1.addActionListener(e ->
-                calculateLocalAction()
-        );
+        initializeTable();
 
-        calculateButton_panel2.addActionListener(e ->
-                calculateRemoteAction()
-        );
+        calculateButton_panel1.addActionListener(e -> {
 
-        pingButton_panel1.addActionListener(e ->
-                pingRemoteAction()
-        );
+
+            setStateInformation("Waiting...");
+            new Thread(this::calculateLocalAction).start();
+            new Thread(this::pingRemoteAction).start();
+        });
+
+        calculateButton_panel2.addActionListener(e -> {
+            calculateButton_panel2.setEnabled(false);
+            new Thread(this::calculateRemoteAction).start();
+        });
+
+        uploadFileButton.addActionListener(e -> {
+            uploadFileButton.setEnabled(false);
+            progressBar1.setValue(0);
+            new Thread(this::uploadFile).start();
+        });
+    }
+
+    private void uploadFile() {
+        StringTokenizer data = null;
+        File file = openFile();
+        DefaultTableModel model = (DefaultTableModel) table1.getModel();
+        if (file != null) {
+            try (FileInputStream inputStream = new FileInputStream(file)) {
+                String everything = IOUtils.toString(inputStream);
+                data = new StringTokenizer(everything, ",");
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            int i = data.countTokens();
+
+            while(data.hasMoreTokens()) {
+                TableRow tableRow = new TableRow((data.nextToken()));
+                tableRows.add(tableRow);
+                progressBar1.setValue(progressBar1.getValue() + (100/i));
+                model.addRow(new Object[]{tableRow.getIpAddress(), tableRow.getDomainName(), "-","-","-","-"});
+
+            }
+            uploadFileButton.setEnabled(true);
+        }
+    }
+
+    private void initializeTable() {
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("Ip address");
+        model.addColumn("Host name");
+        model.addColumn("Country");
+        model.addColumn("City");
+        model.addColumn("Distance");
+        model.addColumn("RTT");
+        table1.setModel(model);
+    }
+
+    private File openFile() {
+        JFileChooser openFile = new JFileChooser();
+        int dialog = openFile.showOpenDialog(null);
+        if (dialog == JFileChooser.APPROVE_OPTION) {
+            return openFile.getSelectedFile();
+        }
+            return null;
+    }
+
+    private void setStateInformation(String status) {
+        distanceLabel_panel1.setText(status);
+        rttValueLabel.setText(status);
+        calculateButton_panel1.setEnabled(false);
     }
 
     private void calculateRemoteAction() {
@@ -127,6 +206,7 @@ public class MainWindow extends JFrame {
         } catch (Exception e1) {
             e1.printStackTrace();
         }
+        calculateButton_panel2.setEnabled(true);
     }
 
     private void setRemoteInformation(Geolocation geolocationRemote1, Geolocation geolocationRemote2) {
@@ -156,6 +236,7 @@ public class MainWindow extends JFrame {
             }
             if (ipValidator.validateExistence(rootPanel, geolocationRemote, remoteIpAddress)) {
                 Double rttValue;
+
                 if ((rttValue = pingService.calculateRttValue(remoteIpAddress)) != null) {
                     rttValueLabel.setText(String.valueOf(rttValue) + " ms");
                 } else {
@@ -163,9 +244,11 @@ public class MainWindow extends JFrame {
                 }
             }
         }
+        calculateButton_panel1.setEnabled(true);
     }
 
     private void calculateLocalAction() {
+        distanceLabel_panel1.setText("Waiting");
         String remoteIpAddress = remoteIpAddressTextField.getText();
         calculateLocale(remoteIpAddress);
     }
