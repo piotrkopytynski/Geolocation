@@ -20,6 +20,8 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -133,6 +135,37 @@ public class MainWindow extends JFrame {
             progressBar1.setValue(0);
             new Thread(this::uploadFile).start();
         });
+
+        startButton.addActionListener(e -> {
+            progressBar1.setValue(0);
+            new Thread(this::calculateTable).start();
+        });
+    }
+
+    private void calculateTable() {
+        startButton.setEnabled(false);
+        uploadFileButton.setEnabled(false);
+        DefaultTableModel model = (DefaultTableModel) table1.getModel();
+        model.setRowCount(0);
+
+        tableRows.forEach(tableRow -> {
+            try {
+                Geolocation object = geolocationService.getJsonObject(tableRow.getIpAddress());
+                tableRow.setCity(object.getCity());
+                tableRow.setCountry(object.getCountry());
+                tableRow.setDistance(Long.valueOf(distanceService.calculate(geolocationLocal, object).replaceAll(" km","")));
+                tableRow.setRttTime(pingService.calculateRttValue(tableRow.getIpAddress()));
+                model.addRow(new Object[]{tableRow.getIpAddress(), tableRow.getDomainName(), tableRow.getCountry(),
+                        tableRow.getCity(),tableRow.getDistance(),tableRow.getRttTime()});
+                progressBar1.setValue(progressBar1.getValue() + (100/tableRows.size()));
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+
+
+        });
+        startButton.setEnabled(true);
+        uploadFileButton.setEnabled(true);
     }
 
     private void uploadFile() {
@@ -154,7 +187,6 @@ public class MainWindow extends JFrame {
                 tableRows.add(tableRow);
                 progressBar1.setValue(progressBar1.getValue() + (100/i));
                 model.addRow(new Object[]{tableRow.getIpAddress(), tableRow.getDomainName(), "-","-","-","-"});
-
             }
             uploadFileButton.setEnabled(true);
         }
