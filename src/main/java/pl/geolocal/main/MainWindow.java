@@ -4,10 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,18 +19,14 @@ import pl.geolocal.util.MapGenerator;
 
 import javax.annotation.PostConstruct;
 import javax.swing.*;
-import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.*;
 
 /**
  * Created by piotr on 06.01.2017.
@@ -54,6 +47,7 @@ public class MainWindow extends JFrame {
     private String localIpAddress;
     private Geolocation geolocationLocal;
 
+    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     private JPanel rootPanel;
     private JTabbedPane tabbedPanel;
@@ -97,6 +91,7 @@ public class MainWindow extends JFrame {
     private JButton generateStatisticButton;
     private JComboBox comboBox1;
     private JButton clearButton;
+    private JPanel dataPanel;
     private JLabel mapLabel;
 
 
@@ -126,6 +121,7 @@ public class MainWindow extends JFrame {
         initializeTable();
 
         initializeComboBox();
+
 
         calculateButton_panel1.addActionListener(e -> {
 
@@ -162,20 +158,16 @@ public class MainWindow extends JFrame {
             File file = new File("data.txt");
             StringBuilder stringBuilder = new StringBuilder();
             tableRows.forEach(tableRow -> {
-                stringBuilder.append(tableRow.toString()).append("\n");
+                tableRow.getRttMeasurement().forEach((date, aDouble) -> {
+                    stringBuilder.append(tableRow.toStringBuilder().append(",").append(dateFormat.format(date)).append(",").append(aDouble)).append("\n");
+                });
             });
             try {
                 FileUtils.writeStringToFile(file, String.valueOf(stringBuilder));
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-
-            JFreeChart lineChart = ChartFactory.createLineChart(
-                    "Corelation",
-                    "RTT", "Distane",
-                    createDataset(),
-                    PlotOrientation.VERTICAL,
-                    true, true, false);
+            JOptionPane.showMessageDialog(rootPanel, "Generating completed");
         });
     }
 
@@ -188,7 +180,7 @@ public class MainWindow extends JFrame {
     private DefaultCategoryDataset createDataset() {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         tableRows.forEach(tableRow -> {
-            dataset.addValue(tableRow.getDistance(), "Distance", tableRow.getRttTime().toString());
+            dataset.addValue(tableRow.getDistance(), "Distance", tableRow.getRttMeasurement().toString());
         });
         return dataset;
     }
@@ -206,12 +198,23 @@ public class MainWindow extends JFrame {
             int finalIndex = index;
             tableRows.forEach(tableRow -> {
                 try {
-                    List<Double> rttTime = tableRow.getRttTime();
-                    rttTime.add(pingService.calculateRttValue(tableRow.getIpAddress()));
-                    model.addRow(new Object[]{finalIndex,tableRow.getIpAddress(), tableRow.getDomainName(), tableRow.getCountry(),
-                            tableRow.getCity(), tableRow.getDistance(), rttTime.get(rttTime.size() - 1)});
+                    Map<Date, Double> rttMeasurement = tableRow.getRttMeasurement();
+                    rttMeasurement.put(new Date(), pingService.calculateRttValue(tableRow.getIpAddress()));
+                    Median median1 = new Median();
+                    if(finalIndex > 1) {
+                        model.removeRow(tableRows.indexOf(tableRow));
+                    }
+                    model.insertRow(tableRows.indexOf(tableRow) ,new Object[]{
+                            finalIndex,
+                            dateFormat.format(rttMeasurement.keySet().toArray()[rttMeasurement.size() - 1]),
+                            tableRow.getIpAddress(),
+                            tableRow.getCountry(),
+                            tableRow.getCity(), tableRow.getDistance(),
+                            rttMeasurement.values().toArray()[rttMeasurement.size() - 1],
+                            median1.evaluate(rttMeasurement.values().stream().mapToDouble(Double::doubleValue).toArray())});
                     progressBar1.setValue(progressBar1.getValue() +
-                            (100 / (tableRows.size() * ((Integer) comboBox1.getSelectedItem()))));
+                            (100 / ((tableRows.size()) * ((Integer) comboBox1.getSelectedItem()))));
+
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
@@ -255,8 +258,8 @@ public class MainWindow extends JFrame {
                 tableRow.setCountry(object.getCountry());
                 tableRow.setDistance(Long.valueOf(distanceService.calculate(geolocationLocal, object).replaceAll(" km", "")));
                 tableRows.add(tableRow);
-                model.addRow(new Object[]{index ,tableRow.getIpAddress(), tableRow.getDomainName(), tableRow.getCountry(),
-                        tableRow.getCity(), tableRow.getDistance(), "-"});
+                model.addRow(new Object[]{index ,"-",tableRow.getIpAddress(), tableRow.getCountry(),
+                        tableRow.getCity(), tableRow.getDistance(), "-","-"});
                 index++;
             }
             uploadFileButton.setEnabled(true);
@@ -266,12 +269,13 @@ public class MainWindow extends JFrame {
     private void initializeTable() {
         DefaultTableModel model = new DefaultTableModel();
         model.addColumn("Number");
-        model.addColumn("Ip address");
-        model.addColumn("Host name");
+        model.addColumn("Date and time");
+        model.addColumn("IP address");
         model.addColumn("Country");
         model.addColumn("City");
         model.addColumn("Distance");
-        model.addColumn("RTT");
+        model.addColumn("Last RTT");
+        model.addColumn("RTT median");
         table1.setModel(model);
     }
 

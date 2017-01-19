@@ -24,7 +24,7 @@ public class PingServiceImpl implements PingService {
 
         try {
             sysProcess = operatingSystem.contains("Windows")? Runtime.getRuntime().exec("ping " + remoteIpAddress) :
-                    Runtime.getRuntime().exec("ping " + remoteIpAddress + " -c 4");
+                    Runtime.getRuntime().exec("ping " + remoteIpAddress + " -c 2");
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(sysProcess.getInputStream()));
 

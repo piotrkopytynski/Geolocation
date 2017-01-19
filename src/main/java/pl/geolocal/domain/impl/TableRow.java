@@ -6,8 +6,7 @@ import lombok.Setter;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by piotr on 12.01.2017.
@@ -17,28 +16,16 @@ import java.util.List;
 @AllArgsConstructor
 public class TableRow {
     private String ipAddress;
-    private String domainName;
-    private List<Double> rttTime = new ArrayList<>();
+    private Map<Date,Double> rttMeasurement = new LinkedHashMap<>();
     private Long distance;
-    private String City;
-    private String Country;
+    private String city;
+    private String country;
 
     public TableRow(String ipAddress) {
         this.ipAddress = ipAddress;
-        this.domainName = ipAddress;
     }
 
-    private static String getDomainName(String ipAddress) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(ipAddress);
-            return inetAddress.getHostName();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            return "not exists";
-        }
-    }
-
-    public String toString() {
-        return ipAddress + "," + distance.toString() + "," + rttTime.get(rttTime.size() -1);
+    public StringBuilder toStringBuilder() {
+        return new StringBuilder(ipAddress + "," + country + "," + city + ","  + distance.toString());
     }
 }
