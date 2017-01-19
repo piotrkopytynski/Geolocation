@@ -2,7 +2,13 @@ package pl.geolocal.main;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pl.geolocal.domain.impl.Geolocation;
@@ -49,7 +55,6 @@ public class MainWindow extends JFrame {
     private Geolocation geolocationLocal;
 
 
-
     private JPanel rootPanel;
     private JTabbedPane tabbedPanel;
     private JTextField remoteIpAddressTextField;
@@ -89,6 +94,9 @@ public class MainWindow extends JFrame {
     private JTable table1;
     private JProgressBar progressBar1;
     private JButton startButton;
+    private JButton generateStatisticButton;
+    private JComboBox comboBox1;
+    private JButton clearButton;
     private JLabel mapLabel;
 
 
@@ -117,6 +125,8 @@ public class MainWindow extends JFrame {
 
         initializeTable();
 
+        initializeComboBox();
+
         calculateButton_panel1.addActionListener(e -> {
 
 
@@ -140,32 +150,80 @@ public class MainWindow extends JFrame {
             progressBar1.setValue(0);
             new Thread(this::calculateTable).start();
         });
+
+        clearButton.addActionListener(e -> {
+            DefaultTableModel model = (DefaultTableModel) table1.getModel();
+            model.setRowCount(0);
+            tableRows = new ArrayList<>();
+            progressBar1.setValue(0);
+        });
+
+        generateStatisticButton.addActionListener(e -> {
+            File file = new File("data.txt");
+            StringBuilder stringBuilder = new StringBuilder();
+            tableRows.forEach(tableRow -> {
+                stringBuilder.append(tableRow.toString()).append("\n");
+            });
+            try {
+                FileUtils.writeStringToFile(file, String.valueOf(stringBuilder));
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            JFreeChart lineChart = ChartFactory.createLineChart(
+                    "Corelation",
+                    "RTT", "Distane",
+                    createDataset(),
+                    PlotOrientation.VERTICAL,
+                    true, true, false);
+        });
+    }
+
+    private void initializeComboBox() {
+        for (int i = 1; i <= 100; i++) {
+            comboBox1.addItem(i);
+        }
+    }
+
+    private DefaultCategoryDataset createDataset() {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        tableRows.forEach(tableRow -> {
+            dataset.addValue(tableRow.getDistance(), "Distance", tableRow.getRttTime().toString());
+        });
+        return dataset;
     }
 
     private void calculateTable() {
         startButton.setEnabled(false);
         uploadFileButton.setEnabled(false);
+        comboBox1.setEnabled(false);
+        clearButton.setEnabled(false);
         DefaultTableModel model = (DefaultTableModel) table1.getModel();
         model.setRowCount(0);
 
-        tableRows.forEach(tableRow -> {
-            try {
-                Geolocation object = geolocationService.getJsonObject(tableRow.getIpAddress());
-                tableRow.setCity(object.getCity());
-                tableRow.setCountry(object.getCountry());
-                tableRow.setDistance(Long.valueOf(distanceService.calculate(geolocationLocal, object).replaceAll(" km","")));
-                tableRow.setRttTime(pingService.calculateRttValue(tableRow.getIpAddress()));
-                model.addRow(new Object[]{tableRow.getIpAddress(), tableRow.getDomainName(), tableRow.getCountry(),
-                        tableRow.getCity(),tableRow.getDistance(),tableRow.getRttTime()});
-                progressBar1.setValue(progressBar1.getValue() + (100/tableRows.size()));
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
+        int index = 1;
+        do {
+            int finalIndex = index;
+            tableRows.forEach(tableRow -> {
+                try {
+                    List<Double> rttTime = tableRow.getRttTime();
+                    rttTime.add(pingService.calculateRttValue(tableRow.getIpAddress()));
+                    model.addRow(new Object[]{finalIndex,tableRow.getIpAddress(), tableRow.getDomainName(), tableRow.getCountry(),
+                            tableRow.getCity(), tableRow.getDistance(), rttTime.get(rttTime.size() - 1)});
+                    progressBar1.setValue(progressBar1.getValue() +
+                            (100 / (tableRows.size() * ((Integer) comboBox1.getSelectedItem()))));
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
 
 
-        });
+            });
+            index++;
+        } while(((int)comboBox1.getSelectedItem() >= index));
         startButton.setEnabled(true);
         uploadFileButton.setEnabled(true);
+        comboBox1.setEnabled(true);
+        clearButton.setEnabled(true);
     }
 
     private void uploadFile() {
@@ -182,11 +240,24 @@ public class MainWindow extends JFrame {
 
             int i = data.countTokens();
 
-            while(data.hasMoreTokens()) {
+            int index = 0;
+            while (data.hasMoreTokens()) {
                 TableRow tableRow = new TableRow((data.nextToken()));
+
+                progressBar1.setValue(progressBar1.getValue() + (100 / i));
+                Geolocation object = null;
+                try {
+                    object = geolocationService.getJsonObject(tableRow.getIpAddress());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                tableRow.setCity(object.getCity());
+                tableRow.setCountry(object.getCountry());
+                tableRow.setDistance(Long.valueOf(distanceService.calculate(geolocationLocal, object).replaceAll(" km", "")));
                 tableRows.add(tableRow);
-                progressBar1.setValue(progressBar1.getValue() + (100/i));
-                model.addRow(new Object[]{tableRow.getIpAddress(), tableRow.getDomainName(), "-","-","-","-"});
+                model.addRow(new Object[]{index ,tableRow.getIpAddress(), tableRow.getDomainName(), tableRow.getCountry(),
+                        tableRow.getCity(), tableRow.getDistance(), "-"});
+                index++;
             }
             uploadFileButton.setEnabled(true);
         }
@@ -194,6 +265,7 @@ public class MainWindow extends JFrame {
 
     private void initializeTable() {
         DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("Number");
         model.addColumn("Ip address");
         model.addColumn("Host name");
         model.addColumn("Country");
@@ -209,7 +281,7 @@ public class MainWindow extends JFrame {
         if (dialog == JFileChooser.APPROVE_OPTION) {
             return openFile.getSelectedFile();
         }
-            return null;
+        return null;
     }
 
     private void setStateInformation(String status) {

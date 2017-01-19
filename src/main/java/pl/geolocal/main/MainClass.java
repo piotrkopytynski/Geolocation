@@ -1,6 +1,5 @@
 package pl.geolocal.main;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
