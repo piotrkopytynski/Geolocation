@@ -5,7 +5,6 @@ import lombok.Setter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
-import org.jfree.data.category.DefaultCategoryDataset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pl.geolocal.domain.impl.Geolocation;
@@ -25,7 +24,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.*;
 
 /**
@@ -88,7 +86,7 @@ public class MainWindow extends JFrame {
     private JTable table1;
     private JProgressBar progressBar1;
     private JButton startButton;
-    private JButton generateStatisticButton;
+    private JButton saveResultsButton;
     private JComboBox comboBox1;
     private JButton clearButton;
     private JPanel dataPanel;
@@ -111,21 +109,18 @@ public class MainWindow extends JFrame {
     }
 
     private void initComponents() {
-
         setResizable(false);
-
         initLocalInformation();
-
         initDefaultMaps();
-
         initializeTable();
-
         initializeComboBox();
+        initializeListeners();
 
+        saveResultsButton.setEnabled(false);
+    }
 
+    private void initializeListeners() {
         calculateButton_panel1.addActionListener(e -> {
-
-
             setStateInformation("Waiting...");
             new Thread(this::calculateLocalAction).start();
             new Thread(this::pingRemoteAction).start();
@@ -148,41 +143,42 @@ public class MainWindow extends JFrame {
         });
 
         clearButton.addActionListener(e -> {
-            DefaultTableModel model = (DefaultTableModel) table1.getModel();
-            model.setRowCount(0);
-            tableRows = new ArrayList<>();
-            progressBar1.setValue(0);
+            clearTable();
         });
 
-        generateStatisticButton.addActionListener(e -> {
-            File file = new File("data.txt");
-            StringBuilder stringBuilder = new StringBuilder();
-            tableRows.forEach(tableRow -> {
-                tableRow.getRttMeasurement().forEach((date, aDouble) -> {
-                    stringBuilder.append(tableRow.toStringBuilder().append(",").append(dateFormat.format(date)).append(",").append(aDouble)).append("\n");
-                });
-            });
-            try {
-                FileUtils.writeStringToFile(file, String.valueOf(stringBuilder));
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+        saveResultsButton.addActionListener(e -> {
+            generateFileWithData();
             JOptionPane.showMessageDialog(rootPanel, "Generating completed");
         });
     }
 
-    private void initializeComboBox() {
-        for (int i = 1; i <= 100; i++) {
-            comboBox1.addItem(i);
+    private void generateFileWithData() {
+        File file = new File("data.txt");
+        StringBuilder stringBuilder = new StringBuilder();
+        tableRows.forEach(tableRow -> {
+            tableRow.getRttMeasurement().forEach((date, aDouble) -> {
+                stringBuilder.append(tableRow.toStringBuilder().append(",").append(dateFormat.format(date)).append(",")
+                        .append(aDouble)).append("\n");
+            });
+        });
+        try {
+            FileUtils.writeStringToFile(file, String.valueOf(stringBuilder));
+        } catch (IOException e1) {
+            e1.printStackTrace();
         }
     }
 
-    private DefaultCategoryDataset createDataset() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        tableRows.forEach(tableRow -> {
-            dataset.addValue(tableRow.getDistance(), "Distance", tableRow.getRttMeasurement().toString());
-        });
-        return dataset;
+    private void clearTable() {
+        DefaultTableModel model = (DefaultTableModel) table1.getModel();
+        model.setRowCount(0);
+        tableRows = new ArrayList<>();
+        progressBar1.setValue(0);
+    }
+
+    private void initializeComboBox() {
+        for (int i = 1; i <= 1000; i++) {
+            comboBox1.addItem(i);
+        }
     }
 
     private void calculateTable() {
@@ -212,8 +208,8 @@ public class MainWindow extends JFrame {
                             tableRow.getCity(), tableRow.getDistance(),
                             rttMeasurement.values().toArray()[rttMeasurement.size() - 1],
                             median1.evaluate(rttMeasurement.values().stream().mapToDouble(Double::doubleValue).toArray())});
-                    progressBar1.setValue(progressBar1.getValue() +
-                            (100 / ((tableRows.size()) * ((Integer) comboBox1.getSelectedItem()))));
+                    progressBar1.setValue((int)Math.ceil(progressBar1.getValue() +
+                            (100.0 / ((tableRows.size()) * ((Integer) comboBox1.getSelectedItem())))));
 
                 } catch (Exception e1) {
                     e1.printStackTrace();
@@ -227,6 +223,7 @@ public class MainWindow extends JFrame {
         uploadFileButton.setEnabled(true);
         comboBox1.setEnabled(true);
         clearButton.setEnabled(true);
+        saveResultsButton.setEnabled(true);
         JOptionPane.showMessageDialog(rootPanel, "Calculating completed");
     }
 

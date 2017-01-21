@@ -20,6 +20,7 @@ public class TableRow {
     private Long distance;
     private String city;
     private String country;
+    private Long ipHops;
 
     public TableRow(String ipAddress) {
         this.ipAddress = ipAddress;
