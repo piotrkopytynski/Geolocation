@@ -227,6 +227,7 @@ public class MainWindow extends JFrame {
         uploadFileButton.setEnabled(true);
         comboBox1.setEnabled(true);
         clearButton.setEnabled(true);
+        JOptionPane.showMessageDialog(rootPanel, "Calculating completed");
     }
 
     private void uploadFile() {
