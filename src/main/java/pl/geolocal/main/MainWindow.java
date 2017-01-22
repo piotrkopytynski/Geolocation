@@ -90,6 +90,7 @@ public class MainWindow extends JFrame {
     private JComboBox comboBox1;
     private JButton clearButton;
     private JPanel dataPanel;
+    private JLabel ipPathLabel;
     private JLabel mapLabel;
 
 
@@ -289,6 +290,7 @@ public class MainWindow extends JFrame {
     private void setStateInformation(String status) {
         distanceLabel_panel1.setText(status);
         rttValueLabel.setText(status);
+        ipPathLabel.setText(status);
         calculateButton_panel1.setEnabled(false);
     }
 
@@ -342,11 +344,18 @@ public class MainWindow extends JFrame {
             }
             if (ipValidator.validateExistence(rootPanel, geolocationRemote, remoteIpAddress)) {
                 Double rttValue;
+                Integer ipPathValue;
 
                 if ((rttValue = pingService.calculateRttValue(remoteIpAddress)) != null) {
                     rttValueLabel.setText(String.valueOf(rttValue) + " ms");
                 } else {
                     rttValueLabel.setText("Request timed out");
+                }
+
+                if ((ipPathValue = pingService.tracerouteRemote(remoteIpAddress)) > 0){
+                    ipPathLabel.setText(String.valueOf((ipPathValue)));
+                } else {
+                    ipPathLabel.setText("Unable to perform traceroute");
                 }
             }
         }
