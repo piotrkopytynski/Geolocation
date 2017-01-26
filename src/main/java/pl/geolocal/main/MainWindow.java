@@ -116,8 +116,6 @@ public class MainWindow extends JFrame {
         initializeTable();
         initializeComboBox();
         initializeListeners();
-
-        saveResultsButton.setEnabled(false);
     }
 
     private void initializeListeners() {
@@ -158,7 +156,7 @@ public class MainWindow extends JFrame {
         StringBuilder stringBuilder = new StringBuilder();
         tableRows.forEach(tableRow -> {
             tableRow.getRttMeasurement().forEach((date, aDouble) -> {
-                stringBuilder.append(tableRow.toStringBuilder().append(",").append(dateFormat.format(date)).append(",")
+                stringBuilder.append(tableRow.toStringBuilder().append(",")
                         .append(aDouble)).append("\n");
             });
         });
